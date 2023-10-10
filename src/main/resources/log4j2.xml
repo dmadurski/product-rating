@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="warn" name="MyApp">
+    <Appenders>
+        <Console name="STDOUT" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d %p %m%n"/>
+        </Console>
+
+        <RollingFile name="RollingFile" fileName="logs/app.log"
+                     filePattern="logs/$${date:yyyy-MM}/app-%d{yyyy-MM-dd}-#%i.log.gz">
+            <PatternLayout pattern="%d %p %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="5 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy>
+                <Delete basePath="${baseDir}" maxDepth="3">
+                    <IfFileName glob="**/app-*.log.gz" />
+                    <IfLastModified age="P30D" />
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <RollingFile name="RollingFileReviews" fileName="logs/Bad-Reviews.log"
+                     filePattern="logs/$${date:yyyy-MM}/Bad-Reviews-%d{yyyy-MM-dd}-#%i.log.gz">
+            <PatternLayout pattern="%d %p %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="7"/>
+                <SizeBasedTriggeringPolicy size="5 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy />
+        </RollingFile>
+
+        <RollingFile name="RollingFileMetrics" fileName="logs/Site-Metrics.log"
+                     filePattern="logs/$${date:yyyy-MM}/Site-Metrics-%d{yyyy-MM-dd}-#%i.log.gz">
+            <PatternLayout pattern="%d %p %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="7"/>
+                <SizeBasedTriggeringPolicy size="5 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy />
+        </RollingFile>
+
+        <RollingFile name="RollingFileInfoAndDebug" fileName="logs/InfoAndDebug.log"
+                     filePattern="logs/$${date:yyyy-MM}/Site-Metrics-%d{yyyy-MM-dd}-#%i.log.gz">
+            <PatternLayout pattern="%d %p %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="7"/>
+                <SizeBasedTriggeringPolicy size="5 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy />
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <Root level="debug">
+            <AppenderRef ref="STDOUT" />
+            <AppenderRef ref="RollingFile" />
+        </Root>
+        <Logger name="BadReviewLogger" level="info" additivity="false">
+            <AppenderRef ref="RollingFileReviews"/>
+        </Logger>
+        <Logger name="MetricsLogger" level="info" additivity="false">
+            <AppenderRef ref="RollingFileMetrics"/>
+        </Logger>
+        <Logger name="InfoAndDebugLogger" level="debug" additivity="false">
+            <AppenderRef ref="RollingFileInfoAndDebug"/>
+        </Logger>
+    </Loggers>
+</Configuration>
