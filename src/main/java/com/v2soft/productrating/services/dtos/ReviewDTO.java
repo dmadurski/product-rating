@@ -1,5 +1,6 @@
 package com.v2soft.productrating.services.dtos;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 @Getter
@@ -8,6 +9,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReviewDTO {
+    @JsonIgnore
+    public String ratingCode;
     public String firstName;
     public String lastName;
     public int zipcode;
