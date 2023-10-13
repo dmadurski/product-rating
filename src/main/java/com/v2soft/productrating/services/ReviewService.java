@@ -3,12 +3,12 @@ package com.v2soft.productrating.services;
 import com.v2soft.productrating.domain.Review;
 import com.v2soft.productrating.services.dtos.ReviewDTO;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@Service
 public interface ReviewService {
+
+    List<ReviewDTO> findAll();
 
     List<ReviewDTO> findLastTenReviews();
 
@@ -27,8 +27,6 @@ public interface ReviewService {
     ResponseEntity<Object> deleteSpecificReview(String id);
 
     ResponseEntity<Object> updateReview(Review updatedReview);
-
-    String createJWT();
 
     Review findReview(String id);
 }

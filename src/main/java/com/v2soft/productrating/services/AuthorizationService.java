@@ -1,8 +1,7 @@
 package com.v2soft.productrating.services;
 
-import org.springframework.stereotype.Service;
-
-@Service
 public interface AuthorizationService {
-    boolean verifyToken(String token);
+    boolean verifyToken(String token, String tokenFunction, String clientId);
+
+    boolean verifyClient(String clientId, String clientSecret);
 }

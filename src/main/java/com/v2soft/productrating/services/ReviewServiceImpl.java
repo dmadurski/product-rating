@@ -1,11 +1,9 @@
 package com.v2soft.productrating.services;
 
-import com.v2soft.productrating.domain.Token;
-import com.v2soft.productrating.repositories.TokenRepository;
+import com.v2soft.productrating.repositories.ClientRepository;
 import com.v2soft.productrating.services.dtos.ReviewDTO;
 import com.v2soft.productrating.domain.Review;
 import com.v2soft.productrating.repositories.ReviewRepository;
-import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,11 +18,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 @RequiredArgsConstructor
 @Service
@@ -42,13 +37,18 @@ public class ReviewServiceImpl implements ReviewService{
     @Value("${review.sort.limit}")
     private int sortLimit;
 
-    @Value("${jwt.secret.key}")
-    private String secret;
-
     final MongoTemplate mongoTemplate;
     final ReviewRepository reviewRepository;
-    final TokenRepository tokenRepository;
+    final ClientRepository clientRepository;
     final ConversionService conversionService;
+
+    @Override
+    public List<ReviewDTO> findAll() {
+        List<Review> allReviews = reviewRepository.findAll();
+        return allReviews.stream()
+                .map((review -> (conversionService.convert(review, ReviewDTO.class))))
+                .toList();
+    }
 
     @Override
     public List<ReviewDTO> findLastTenReviews() {
@@ -74,13 +74,12 @@ public class ReviewServiceImpl implements ReviewService{
     public ResponseEntity<Object> findReviewByReviewCode(String reviewCode) {
         Optional<Review> reviewOptional = reviewRepository.findById(reviewCode);
 
-        //If no review is found with the code, return an explanation message
-        if (reviewOptional.isPresent()){
+        if(reviewOptional.isPresent()) {
             ReviewDTO foundReviewDTO = conversionService.convert(reviewOptional.get(), ReviewDTO.class);
             return ResponseEntity.ok(foundReviewDTO);
         } else {
-            infoAndDebuglogger.debug("Unable to find a review with reviewCode: " + reviewCode);
-            return new ResponseEntity<>("Unable to find a review matching provided ID. Make sure ID is correct and try again.", HttpStatus.NOT_FOUND);
+            infoAndDebuglogger.debug("Unable to a review with code: " + reviewCode);
+            return new ResponseEntity<>("Unable to find any reviews for that product.", HttpStatus.NOT_FOUND);
         }
     }
 
@@ -122,6 +121,7 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     //Ignore property for optional properites in domain (for example: comments)
+    //Add a check to make sure the same user can't make multiple reviews for the same product
     @Override
     public ResponseEntity<Object> saveReview(ReviewDTO newReviewDTO) {
         Review newReview = conversionService.convert(newReviewDTO, Review.class);
@@ -207,26 +207,8 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Override
-    public String createJWT() {
-        Date expiration = new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5));
-        byte[] secretKeyBytes = Base64.getDecoder().decode(secret);
-        SecretKey secretKey = new SecretKeySpec(secretKeyBytes, "HmacSHA256");
-
-        String jwtID = java.util.UUID.randomUUID().toString();
-        String jwtString = Jwts.builder()
-                .expiration(expiration)
-                .id(jwtID)
-                .signWith(secretKey)
-                .compact();
-        Token newJwt = new Token(jwtID, jwtString);
-        tokenRepository.save(newJwt);
-        return "Token successfully saved!";
-    }
-
-    @Override
     public Review findReview(String id) {
         Optional<Review> foundReviewOptional = reviewRepository.findById(id);
         return foundReviewOptional.orElse(null);
-
     }
 }

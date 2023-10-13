@@ -4,17 +4,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
-
-import java.util.Date;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class Token {
-
+@Document("clients")
+public class Client {
     @Id
-    String id;
-    String ownerId; //Should match a valid clientId
-    String jwtString;
-    Date expirationDate;
+    String clientId;
+    String tokenSalt;
+    String hashedSecret;
 }
