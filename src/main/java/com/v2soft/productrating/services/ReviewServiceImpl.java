@@ -1,6 +1,8 @@
 package com.v2soft.productrating.services;
 
 import com.v2soft.productrating.repositories.ClientRepository;
+import com.v2soft.productrating.services.converters.ReviewDTOToReview;
+import com.v2soft.productrating.services.converters.ReviewToReviewDTO;
 import com.v2soft.productrating.services.dtos.ReviewDTO;
 import com.v2soft.productrating.domain.Review;
 import com.v2soft.productrating.repositories.ReviewRepository;
@@ -8,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
@@ -40,13 +41,15 @@ public class ReviewServiceImpl implements ReviewService{
     final MongoTemplate mongoTemplate;
     final ReviewRepository reviewRepository;
     final ClientRepository clientRepository;
-    final ConversionService conversionService;
+    final ReviewDTOToReview reviewDTOToReviewConverter;
+    final ReviewToReviewDTO reviewToReviewDTOConverter;
 
     @Override
     public List<ReviewDTO> findAll() {
         List<Review> allReviews = reviewRepository.findAll();
+
         return allReviews.stream()
-                .map((review -> (conversionService.convert(review, ReviewDTO.class))))
+                .map(reviewToReviewDTOConverter::convert)
                 .toList();
     }
 
@@ -56,7 +59,7 @@ public class ReviewServiceImpl implements ReviewService{
         List<Review> lastTenReviews = reviewRepository.findTop10ByOrderByDateAndTimeDesc();
 
         return lastTenReviews.stream()
-                .map((review -> (conversionService.convert(review, ReviewDTO.class))))
+                .map(reviewToReviewDTOConverter::convert)
                 .toList();
     }
 
@@ -66,7 +69,7 @@ public class ReviewServiceImpl implements ReviewService{
         List<Review> lastTenReviews = mongoTemplate.find(query, Review.class);
 
         return lastTenReviews.stream()
-                .map((review -> (conversionService.convert(review, ReviewDTO.class))))
+                .map(reviewToReviewDTOConverter::convert)
                 .toList();
     }
 
@@ -75,7 +78,7 @@ public class ReviewServiceImpl implements ReviewService{
         Optional<Review> reviewOptional = reviewRepository.findById(reviewCode);
 
         if(reviewOptional.isPresent()) {
-            ReviewDTO foundReviewDTO = conversionService.convert(reviewOptional.get(), ReviewDTO.class);
+            ReviewDTO foundReviewDTO = reviewToReviewDTOConverter.convert(reviewOptional.get());
             return ResponseEntity.ok(foundReviewDTO);
         } else {
             infoAndDebuglogger.debug("Unable to a review with code: " + reviewCode);
@@ -89,7 +92,7 @@ public class ReviewServiceImpl implements ReviewService{
 
         //Convert the list of Reviews to a list of ReviewDTOs
         List<ReviewDTO> reviewDTOSForProduct = reviewsForProduct.stream()
-                .map((review -> (conversionService.convert(review, ReviewDTO.class))))
+                .map(reviewToReviewDTOConverter::convert)
                 .toList();
 
         //If no product reviews are found, return an explanation message
@@ -108,7 +111,7 @@ public class ReviewServiceImpl implements ReviewService{
 
         //Convert the list of Reviews to a list of ReviewDTOs
         List<ReviewDTO> reviewDTOSForProduct = reviewsForProduct.stream()
-                .map((review -> (conversionService.convert(review, ReviewDTO.class))))
+                .map(reviewToReviewDTOConverter::convert)
                 .toList();
 
         //If no product reviews are found, return an explanation message
@@ -124,7 +127,7 @@ public class ReviewServiceImpl implements ReviewService{
     //Add a check to make sure the same user can't make multiple reviews for the same product
     @Override
     public ResponseEntity<Object> saveReview(ReviewDTO newReviewDTO) {
-        Review newReview = conversionService.convert(newReviewDTO, Review.class);
+        Review newReview = reviewDTOToReviewConverter.convert(newReviewDTO);
 
         //This code can be removed once input validation is included on the front-end
         if(newReview == null){
@@ -198,7 +201,7 @@ public class ReviewServiceImpl implements ReviewService{
 
             if(updatedReview.getScore() < poorScore) lowReviewsLogger.info("Bad review:" + updatedReview.reviewCollectionToString());
 
-            ReviewDTO updatedReviewDTO = conversionService.convert(updatedReview, ReviewDTO.class);
+            ReviewDTO updatedReviewDTO = reviewToReviewDTOConverter.convert(updatedReview);
             return ResponseEntity.ok(updatedReviewDTO);
         } else {
             infoAndDebuglogger.debug("No review found with provided ID: " + updatedReview.getRatingCode());

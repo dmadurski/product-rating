@@ -21,7 +21,11 @@ public class ClientServiceImpl implements ClientService{
 
     final ClientRepository clientRepository;
     @Override
-    public String createNewClient(String clientSecret) {
+    public Client createNewClient(String clientSecret) throws IllegalArgumentException {
+        if (clientSecret == null || clientSecret.isEmpty()) {
+            throw new IllegalArgumentException("Client secret must be a non-empty string");
+        }
+
         //Generate a random salt, ID, hash the secret, then save them to a new client
         SecureRandom random = new SecureRandom();
         byte[] saltBytes = new byte[16];
@@ -36,7 +40,7 @@ public class ClientServiceImpl implements ClientService{
         Client newClient = new Client(clientID, tokenSalt, hashedSecret);
         clientRepository.save(newClient);
 
-        return "Client successfully created";
+        return newClient;
     }
 
     @Override

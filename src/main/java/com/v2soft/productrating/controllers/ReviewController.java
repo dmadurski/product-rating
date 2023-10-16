@@ -1,5 +1,6 @@
 package com.v2soft.productrating.controllers;
 
+import com.v2soft.productrating.domain.Client;
 import com.v2soft.productrating.domain.Review;
 import com.v2soft.productrating.services.AuthorizationService;
 import com.v2soft.productrating.services.ClientService;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -108,7 +110,12 @@ public class ReviewController {
     }
 
     @PostMapping("/newClient")
-    public String newClient(@RequestBody String clientSecret){
-        return clientService.createNewClient(clientSecret);
+    public ResponseEntity<Object> newClient(@RequestBody String clientSecret){
+        try {
+            Client client = clientService.createNewClient(clientSecret);
+            return ResponseEntity.ok(client);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
+        }
     }
 }

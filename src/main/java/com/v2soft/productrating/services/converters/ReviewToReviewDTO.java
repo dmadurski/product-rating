@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ReviewToReviewDTO implements Converter<Review, ReviewDTO> {
-
+    //try catch or logs for missing bean
     @Override
     public ReviewDTO convert(Review source) {
         ReviewDTO reviewDTO = new ReviewDTO();
