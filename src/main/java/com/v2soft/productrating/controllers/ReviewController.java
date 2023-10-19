@@ -79,7 +79,7 @@ public class ReviewController {
 
     @PreAuthorize("@authorizationServiceImpl.verifyToken(#token, #clientId, 'delete')")
     @GetMapping("/deleteAll")
-    public ResponseEntity<Object> deleteReviews(@RequestHeader(name="Authorization") String token){
+    public ResponseEntity<Object> deleteReviews(@RequestHeader(name="Authorization") String token, @RequestHeader(name = "ClientId") String clientId){
         metricsLogger.info("Accessed /deleteAll endpoint");
 
         reviewService.deleteAllReviews();
@@ -88,10 +88,10 @@ public class ReviewController {
 
     @PreAuthorize("@authorizationServiceImpl.verifyToken(#token, #clientId, 'delete')")
     @GetMapping("/deleteReview")
-    public ResponseEntity<Object> deleteReview(@RequestHeader(name = "Authorization") String token, @RequestHeader(name = "ClientId") String clientId, @RequestBody String id){
+    public ResponseEntity<Object> deleteReview(@RequestHeader(name = "Authorization") String token, @RequestHeader(name = "ClientId") String clientId, @RequestBody String reviewId){
         metricsLogger.info("Accessed /deleteReview endpoint");
 
-        return reviewService.deleteSpecificReview(id);
+        return reviewService.deleteSpecificReview(reviewId);
     }
 
     //add new authorization with a new secretKey

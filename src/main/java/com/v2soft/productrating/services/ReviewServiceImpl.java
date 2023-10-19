@@ -137,7 +137,7 @@ public class ReviewServiceImpl implements ReviewService{
         }
 
         reviewRepository.save(newReview);
-        Optional<Review> reviewOptional = reviewRepository.findById(newReview.getRatingCode());
+        Optional<Review> reviewOptional = reviewRepository.findById(newReview.getRatingId());
 
         //Check if the save was successful, if so, return the DTO, otherwise explain the error
         if (reviewOptional.isPresent()){
@@ -166,7 +166,7 @@ public class ReviewServiceImpl implements ReviewService{
         Optional<Review> reviewToDeleteOptional = reviewRepository.findById(id);
         if (reviewToDeleteOptional.isPresent()) {
             Review reviewToDelete = reviewToDeleteOptional.get();
-            reviewRepository.deleteById(reviewToDelete.getRatingCode());
+            reviewRepository.deleteById(reviewToDelete.getRatingId());
             infoAndDebuglogger.info("Review deleted");
             return ResponseEntity.ok(reviewRepository.findAll());
         } else {
@@ -177,7 +177,7 @@ public class ReviewServiceImpl implements ReviewService{
 
     @Override
     public ResponseEntity<Object> updateReview(Review updatedReview) {
-        Optional<Review> previousReviewOptional = reviewRepository.findById(updatedReview.getRatingCode());
+        Optional<Review> previousReviewOptional = reviewRepository.findById(updatedReview.getRatingId());
         if (previousReviewOptional.isPresent()){
             Review previousReview = previousReviewOptional.get();
 
@@ -204,7 +204,7 @@ public class ReviewServiceImpl implements ReviewService{
             ReviewDTO updatedReviewDTO = reviewToReviewDTOConverter.convert(updatedReview);
             return ResponseEntity.ok(updatedReviewDTO);
         } else {
-            infoAndDebuglogger.debug("No review found with provided ID: " + updatedReview.getRatingCode());
+            infoAndDebuglogger.debug("No review found with provided ID: " + updatedReview.getRatingId());
             return new ResponseEntity<>("Unable to find a review with provided ID. Please try again.", HttpStatus.NOT_FOUND);
         }
     }
