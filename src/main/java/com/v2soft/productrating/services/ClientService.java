@@ -6,7 +6,7 @@ import java.util.Optional;
 
 public interface ClientService {
 
-    String createNewClient(String clientSecret);
+    Client createNewClient(String clientSecret);
 
     Optional<Client> findClientById(String id);
 }

@@ -16,8 +16,9 @@ public class TokenRepositoryImpl implements TokenRepository {
     private MongoTemplate mongoTemplate;
 
     @Override
-    public void save(Token token, String collectionName){
+    public Token save(Token token, String collectionName){
         mongoTemplate.save(token, collectionName);
+        return token;
     }
 
     @Override

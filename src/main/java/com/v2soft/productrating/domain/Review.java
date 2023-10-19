@@ -16,7 +16,7 @@ import java.util.List;
 @Document("reviews")
 public class Review {
     @Id
-    String ratingCode;
+    String ratingId;
 
     public String firstName;
     public String lastName;
