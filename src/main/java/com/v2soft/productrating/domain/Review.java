@@ -18,6 +18,7 @@ public class Review {
     @Id
     String ratingId;
 
+    public String userId;
     public String firstName;
     public String lastName;
     public int zipcode;

@@ -4,7 +4,9 @@ import org.springframework.http.ResponseEntity;
 
 public interface TokenService {
 
-    ResponseEntity<Object> generateJWT(String tokenFunction, String clientId);
+    ResponseEntity<Object> generateJWT(String userName);
 
-    ResponseEntity<Object> retrieveJWT(String tokenFunction, String clientId);
+    ResponseEntity<Object> generateFunctionJWT(String tokenFunction, String userId);
+
+    ResponseEntity<Object> retrieveJWT(String tokenFunction, String userId);
 }

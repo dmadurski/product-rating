@@ -1,6 +1,6 @@
 package com.v2soft.productrating.services;
 
-import com.v2soft.productrating.domain.Client;
+import com.v2soft.productrating.domain.User;
 import com.v2soft.productrating.domain.Token;
 import com.v2soft.productrating.repositories.TokenRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,18 +27,28 @@ class TokenServiceImplTest {
     private TokenRepository tokenRepository;
 
     @Mock
-    private ClientService clientService;
+    private UserService userService;
 
     @InjectMocks
     private TokenServiceImpl tokenService;
 
     String tokenFunction;
     String clientId;
+    String userFirstName;
+    String userLastName;
+    String userUserName;
+    String userPassword;
+    User user;
 
     @BeforeEach
     void setUp() {
         tokenFunction = "update";
         clientId = "12345";
+        userFirstName = "firstName";
+        userLastName = "lastName";
+        userUserName = "userName";
+        userPassword = "exampleSecret";
+        user = new User(clientId, userFirstName, userLastName, userUserName, userPassword, "salt", "USER");
 
         // Use reflection to set the values of the @Value annotated fields
         setField(tokenService, "updatePepper", "aR+HXb4gLz7XHu5XJNNu4BzYrJVQejzaJPOEB/uWaig=");
@@ -55,14 +65,11 @@ class TokenServiceImplTest {
 
     @Test
     void generateJWT() {
-        //given
-        Client client = new Client(clientId, "salt", "hashedSecret");
-
         //when
-        when(clientService.findClientById(clientId)).thenReturn(Optional.of(client));
+        when(userService.findUserById(clientId)).thenReturn(Optional.of(user));
         when(tokenRepository.save(Mockito.isA(Token.class), anyString())).thenAnswer(input -> input.getArgument(0));
 
-        ResponseEntity<Object> response = tokenService.generateJWT(tokenFunction, clientId);
+        ResponseEntity<Object> response = tokenService.generateFunctionJWT(tokenFunction, clientId);
         Token createdToken = (Token) response.getBody();
 
         //then
@@ -77,9 +84,9 @@ class TokenServiceImplTest {
     @Test
     void generateJWTWithMissingClient() {
         //when
-        when(clientService.findClientById(clientId)).thenReturn(Optional.empty());
+        when(userService.findUserById(clientId)).thenReturn(Optional.empty());
 
-        ResponseEntity<Object> response = tokenService.generateJWT(tokenFunction, clientId);
+        ResponseEntity<Object> response = tokenService.generateFunctionJWT(tokenFunction, clientId);
 
         //then
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
@@ -90,12 +97,12 @@ class TokenServiceImplTest {
     @Test
     void generateJWTWithInvalidFunction() {
         //given
-        Client client = new Client(clientId, "salt", "hashedSecret");
+        String badTokenFunction = "fakeFunction";
 
         //when
-        when(clientService.findClientById(clientId)).thenReturn(Optional.of(client));
+        when(userService.findUserById(clientId)).thenReturn(Optional.of(user));
 
-        ResponseEntity<Object> response = tokenService.generateJWT(tokenFunction, clientId);
+        ResponseEntity<Object> response = tokenService.generateFunctionJWT(badTokenFunction, clientId);
 
         //then
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -105,11 +112,8 @@ class TokenServiceImplTest {
 
     @Test
     void retrieveJWT() {
-        //given
-        Client client = new Client(clientId, "salt", "hashedSecret");
-
         //when
-        when(clientService.findClientById(clientId)).thenReturn(Optional.of(client));
+        when(userService.findUserById(clientId)).thenReturn(Optional.of(user));
 
         ResponseEntity<Object> response = tokenService.retrieveJWT(tokenFunction, clientId);
         Token retrievedToken = (Token) response.getBody();

@@ -9,10 +9,14 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-@Document("clients")
-public class Client {
+@Document("users")
+public class User {
     @Id
-    String clientId;
+    String userId;
+    String firstName;
+    String lastName;
+    String userName;
+    String hashedPassword;
     String tokenSalt;
-    String hashedSecret;
+    String role;
 }

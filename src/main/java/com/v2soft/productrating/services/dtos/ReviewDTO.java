@@ -1,6 +1,5 @@
 package com.v2soft.productrating.services.dtos;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -11,8 +10,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReviewDTO {
-    @JsonIgnore
     public String ratingId;
+    public String userId;
     public String firstName;
     public String lastName;
     public int zipcode;

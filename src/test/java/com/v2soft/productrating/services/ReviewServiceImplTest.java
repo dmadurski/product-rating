@@ -1,7 +1,7 @@
 package com.v2soft.productrating.services;
 
 import com.v2soft.productrating.domain.Review;
-import com.v2soft.productrating.repositories.ClientRepository;
+import com.v2soft.productrating.repositories.UserRepository;
 import com.v2soft.productrating.repositories.ReviewRepository;
 import com.v2soft.productrating.services.converters.ReviewDTOToReview;
 import com.v2soft.productrating.services.converters.ReviewToReviewDTO;
@@ -31,7 +31,7 @@ class ReviewServiceImplTest {
     @Mock
     private ReviewRepository reviewRepository;
     @Mock
-    private ClientRepository clientRepository;
+    private UserRepository userRepository;
     @Mock
     private ReviewToReviewDTO reviewToReviewDTOConverter;
     @Mock
@@ -45,17 +45,17 @@ class ReviewServiceImplTest {
     @BeforeEach
     void setUp() {
         reviewList = new ArrayList<>();
-        reviewList.add(new Review("1", "First", "Person", 12345, "Product 1", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
-        reviewList.add(new Review("2", "Second", "Person", 12345, "Product 1", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
-        reviewList.add(new Review("3", "Third", "Person", 12345, "Product 1", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
-        reviewList.add(new Review("4", "Fourth", "Person", 12345, "Product 2", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
-        reviewList.add(new Review("5", "Fifth", "Person", 12345, "Product 2", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
-        reviewList.add(new Review("6", "Sixth", "Person", 12345, "Product 2", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
-        reviewList.add(new Review("7", "Seventh", "Person", 12345, "Product 3", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
-        reviewList.add(new Review("8", "Eighth", "Person", 12345, "Product 3", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
-        reviewList.add(new Review("9", "Ninth", "Person", 12345, "Product 3", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
-        reviewList.add(new Review("10", "Tenth", "Person", 12345, "Product 3", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
-        reviewList.add(new Review("11", "Eleventh", "Person", 12345, "Product 4", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
+        reviewList.add(new Review("1", "11111", "First", "Person", 12345, "Product 1", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
+        reviewList.add(new Review("2", "11112","Second", "Person", 12345, "Product 1", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
+        reviewList.add(new Review("3", "11113","Third", "Person", 12345, "Product 1", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
+        reviewList.add(new Review("4", "11114","Fourth", "Person", 12345, "Product 2", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
+        reviewList.add(new Review("5", "11115","Fifth", "Person", 12345, "Product 2", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
+        reviewList.add(new Review("6", "11116","Sixth", "Person", 12345, "Product 2", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
+        reviewList.add(new Review("7", "11117","Seventh", "Person", 12345, "Product 3", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
+        reviewList.add(new Review("8", "11118","Eighth", "Person", 12345, "Product 3", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
+        reviewList.add(new Review("9", "11119","Ninth", "Person", 12345, "Product 3", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
+        reviewList.add(new Review("10", "11120","Tenth", "Person", 12345, "Product 3", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
+        reviewList.add(new Review("11", "11121","Eleventh", "Person", 12345, "Product 4", 5, "Great Product", LocalDateTime.now(), new ArrayList<>(), 1));
 
         //mock the converter functionality
         when(reviewToReviewDTOConverter.convert(any(Review.class))).thenAnswer(invocation -> {
@@ -118,27 +118,27 @@ class ReviewServiceImplTest {
         verify(reviewToReviewDTOConverter, times(10)).convert(any(Review.class));
     }
 
-    @Test
-    void findReviewByReviewCode() {
-    }
-
-    @Test
-    void findReviewsByProductName() {
-    }
-
-    @Test
-    void saveReview() {
-    }
-
-    @Test
-    void deleteAllReviews() {
-    }
-
-    @Test
-    void deleteSpecificReview() {
-    }
-
-    @Test
-    void updateReview() {
-    }
+//    @Test
+//    void findReviewByReviewCode() {
+//    }
+//
+//    @Test
+//    void findReviewsByProductName() {
+//    }
+//
+//    @Test
+//    void saveReview() {
+//    }
+//
+//    @Test
+//    void deleteAllReviews() {
+//    }
+//
+//    @Test
+//    void deleteSpecificReview() {
+//    }
+//
+//    @Test
+//    void updateReview() {
+//    }
 }

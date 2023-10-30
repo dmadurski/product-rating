@@ -1,8 +1,9 @@
 package com.v2soft.productrating.services;
 
-import com.v2soft.productrating.domain.Client;
+import com.v2soft.productrating.domain.User;
 import com.v2soft.productrating.domain.Token;
 import com.v2soft.productrating.repositories.TokenRepository;
+import com.v2soft.productrating.services.dtos.LoginResponseDTO;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -26,7 +27,7 @@ public class TokenServiceImpl implements TokenService {
     private static final Logger infoAndDebuglogger = LogManager.getLogger("InfoAndDebugLogger");
 
     final TokenRepository tokenRepository;
-    final ClientService clientService;
+    final UserService userService;
 
     @Value("${jwt.update.pepper}")
     private String updatePepper;
@@ -34,23 +35,67 @@ public class TokenServiceImpl implements TokenService {
     @Value("${jwt.delete.pepper}")
     private String deletePepper;
 
+    @Value("${jwt.generic.pepper}")
+    private String genericPepper;
+
     @Value("${delete.token.collection}")
     private String deleteCollection;
 
     @Value("${update.token.collection}")
     private String updateCollection;
 
+    final KeyLocator keyLocator;
+
+    //Method for Frontend access
     @Override
-    public ResponseEntity<Object> generateJWT(String tokenFunction, String clientId){
-        Optional<Client> clientOptional = clientService.findClientById(clientId);
-        if (clientOptional.isEmpty()) {
-            infoAndDebuglogger.debug("Unable to find client with id: " + clientId);
-            return new ResponseEntity<>("No client found with that id", HttpStatus.NOT_FOUND);
+    public ResponseEntity<Object> generateJWT(String userName){
+        Optional<User> userOptional = userService.findUserByUserName(userName);
+        if (userOptional.isEmpty()) {
+            infoAndDebuglogger.debug("Unable to find user with userName: " + userName);
+            return new ResponseEntity<>("No user found with that userName", HttpStatus.NOT_FOUND);
         }
 
-        Client client = clientOptional.get();
+        User user = userOptional.get();
+        String tokenSalt = user.getTokenSalt();
+        Date expiration = new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(2));
 
-        String tokenSalt = client.getTokenSalt();
+        // Decode tokenSalt and tokenPepper
+        byte[] saltBytesDecoded = Base64.getDecoder().decode(tokenSalt);
+        byte[] pepperBytesDecoded = Base64.getDecoder().decode(genericPepper);
+
+        // Concatenate the two byte arrays to create the secret key bytes
+        byte[] secretKeyBytes = new byte[saltBytesDecoded.length + pepperBytesDecoded.length];
+        System.arraycopy(saltBytesDecoded, 0, secretKeyBytes, 0, saltBytesDecoded.length);
+        System.arraycopy(pepperBytesDecoded, 0, secretKeyBytes, saltBytesDecoded.length, pepperBytesDecoded.length);
+
+        // Create the SecretKey using the combined bytes
+        SecretKey secretKey = new SecretKeySpec(secretKeyBytes, "HmacSHA256");
+
+        String jwtID = java.util.UUID.randomUUID().toString();
+        String jwtString = Jwts.builder()
+                .header().keyId(user.getUserId()).and()
+                .expiration(expiration)
+                .id(jwtID)
+                .signWith(secretKey)
+                .compact();
+
+        LoginResponseDTO loginResponse = new LoginResponseDTO(user.getUserId(), user.getFirstName(), user.getLastName(), jwtString, user.getRole());
+
+        return ResponseEntity.ok(loginResponse);
+    }
+
+    //Method for API access
+    @Override
+    public ResponseEntity<Object> generateFunctionJWT(String tokenFunction, String userId){
+        Optional<User> userOptional = userService.findUserById(userId);
+        if (userOptional.isEmpty()) {
+            infoAndDebuglogger.debug("Unable to find user with id: " + userId);
+            return new ResponseEntity<>("No user found with that id", HttpStatus.NOT_FOUND);
+        }
+
+        User user = userOptional.get();
+
+        String tokenSalt = user.getTokenSalt();
         String tokenPepper;
         String collectionName;
 
@@ -89,18 +134,18 @@ public class TokenServiceImpl implements TokenService {
                 .signWith(secretKey)
                 .compact();
 
-        Token newJwt = new Token(jwtID, clientId, jwtString, expiration);
+        Token newJwt = new Token(jwtID, userId, jwtString, expiration);
         tokenRepository.save(newJwt, collectionName);
 
         return ResponseEntity.ok(newJwt);
     }
 
     @Override
-    public ResponseEntity<Object> retrieveJWT(String tokenFunction, String clientId) {
-        Optional<Client> clientOptional = clientService.findClientById(clientId);
-        if (clientOptional.isEmpty()) {
-            infoAndDebuglogger.debug("Unable to find client with id: " + clientId);
-            return new ResponseEntity<>("No client found with that id", HttpStatus.NOT_FOUND);
+    public ResponseEntity<Object> retrieveJWT(String tokenFunction, String userId) {
+        Optional<User> userOptional = userService.findUserById(userId);
+        if (userOptional.isEmpty()) {
+            infoAndDebuglogger.debug("Unable to find user with id: " + userId);
+            return new ResponseEntity<>("No user found with that id", HttpStatus.NOT_FOUND);
         }
 
         //Determine which collectionName to use for searching
@@ -116,13 +161,13 @@ public class TokenServiceImpl implements TokenService {
                 return new ResponseEntity<>(tokenFunction + " is not a proper function. Please try again", HttpStatus.NOT_FOUND);
         }
 
-        Token foundToken = tokenRepository.findByCollectionAndOwnerId(collectionName, clientId);
+        Token foundToken = tokenRepository.findByCollectionAndOwnerId(collectionName, userId);
 
         if(foundToken != null) {
             return ResponseEntity.ok(foundToken);
         } else {
             infoAndDebuglogger.debug("No unexpired token found, attempting to generate a new one");
-            return generateJWT(tokenFunction, clientId);
+            return generateFunctionJWT(tokenFunction, userId);
         }
     }
 }

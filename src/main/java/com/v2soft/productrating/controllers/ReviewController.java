@@ -1,9 +1,10 @@
 package com.v2soft.productrating.controllers;
 
-import com.v2soft.productrating.domain.Client;
 import com.v2soft.productrating.domain.Review;
 import com.v2soft.productrating.services.AuthorizationService;
-import com.v2soft.productrating.services.ClientService;
+import com.v2soft.productrating.services.UserService;
+import com.v2soft.productrating.services.dtos.LoginRequestDTO;
+import com.v2soft.productrating.services.dtos.UserDTO;
 import com.v2soft.productrating.services.dtos.ReviewDTO;
 
 import com.v2soft.productrating.services.ReviewService;
@@ -26,11 +27,12 @@ public class ReviewController {
     private static final Logger metricsLogger = LogManager.getLogger("MetricsLogger");
 
     final ReviewService reviewService;
-    final ClientService clientService;
+    final UserService userService;
     final AuthorizationService authorizationService;
 
+    @PreAuthorize("@authorizationServiceImpl.verifyGenericToken(#token)")
     @GetMapping("/allReviews")
-    public List<ReviewDTO> showAllReviews(){
+    public List<ReviewDTO> showAllReviews(@RequestHeader(name="Authorization") String token){
         metricsLogger.info("Accessed /allReviews endpoint");
 
         return reviewService.findAll();
@@ -70,52 +72,91 @@ public class ReviewController {
         return reviewService.findReviewsByProductNameCustom(productName);
     }
 
+    @PreAuthorize("@authorizationServiceImpl.verifyGenericToken(#token)")
     @PostMapping("/newReview")
-    public ResponseEntity<Object> newReview(@RequestBody ReviewDTO newReviewDTO){
+    public ResponseEntity<Object> newReview(@RequestHeader(name="Authorization") String token, @RequestBody ReviewDTO newReviewDTO){
         metricsLogger.info("Accessed /newReview endpoint");
 
         return reviewService.saveReview(newReviewDTO);
     }
 
-    @PreAuthorize("@authorizationServiceImpl.verifyToken(#token, #clientId, 'delete')")
-    @GetMapping("/deleteAll")
-    public ResponseEntity<Object> deleteReviews(@RequestHeader(name="Authorization") String token, @RequestHeader(name = "ClientId") String clientId){
+    @PreAuthorize("@authorizationServiceImpl.verifyToken(#token, #userId, 'delete')")
+    @DeleteMapping("/deleteAll")
+    public ResponseEntity<Object> deleteReviews(@RequestHeader(name="Authorization") String token,
+                                                @RequestHeader(name = "UserId") String userId){
         metricsLogger.info("Accessed /deleteAll endpoint");
 
         reviewService.deleteAllReviews();
         return ResponseEntity.ok("All reviews deleted!");
     }
 
-    @PreAuthorize("@authorizationServiceImpl.verifyToken(#token, #clientId, 'delete')")
-    @GetMapping("/deleteReview")
-    public ResponseEntity<Object> deleteReview(@RequestHeader(name = "Authorization") String token, @RequestHeader(name = "ClientId") String clientId, @RequestBody String reviewId){
-        metricsLogger.info("Accessed /deleteReview endpoint");
+    @PreAuthorize("@authorizationServiceImpl.verifyToken(#token, #userId, 'delete')")
+    @DeleteMapping("/backendDeleteReview")
+    public ResponseEntity<Object> backendDeleteReview(@RequestHeader(name = "Authorization") String token,
+                                                      @RequestHeader(name = "UserId") String userId, @RequestBody String reviewId){
+        metricsLogger.info("Accessed /backendDeleteReview endpoint");
 
         return reviewService.deleteSpecificReview(reviewId);
     }
 
+    @PreAuthorize("@authorizationServiceImpl.verifyGenericToken(#token)")
+    @DeleteMapping("/deleteReview")
+    public ResponseEntity<Object> deleteReview(@RequestHeader(name = "Authorization") String token, @RequestBody String reviewId){
+        metricsLogger.info("Accessed /deleteReview endpoint");
+        ResponseEntity<Object> response = reviewService.deleteSpecificReview(reviewId);
+        if(response.getStatusCode().equals(HttpStatus.OK)){
+            return ResponseEntity.ok("Review Deleted");
+        } else {
+            return response;
+        }
+    }
+
     //add new authorization with a new secretKey
-    @PreAuthorize("@authorizationServiceImpl.verifyToken(#token, #clientId, 'update')")
+    @PreAuthorize("@authorizationServiceImpl.verifyToken(#token, #userId, 'update')")
     @PostMapping("/updateReview")
-    public ResponseEntity<Object> updateReview(@RequestHeader(name = "Authorization") String token, @RequestHeader(name = "ClientId") String clientId, @RequestBody Review updatedReview){
+    public ResponseEntity<Object> updateReview(@RequestHeader(name = "Authorization") String token,
+                                               @RequestHeader(name = "UserId") String userId, @RequestBody Review updatedReview) {
         metricsLogger.info("Accessed /updateReview endpoint");
 
         return reviewService.updateReview(updatedReview);
     }
 
     @GetMapping("/findReview")
-    public Review findReview(@RequestBody String id){
+    public Review findReview(@RequestBody String id) {
 
         return reviewService.findReview(id);
     }
 
-    @PostMapping("/newClient")
-    public ResponseEntity<Object> newClient(@RequestBody String clientSecret){
+    @PreAuthorize("@authorizationServiceImpl.verifyGenericToken(#token)")
+    @GetMapping("/findReviewsByOwnerId")
+    public List<ReviewDTO> findReviewsByOwnerId(@RequestHeader(name="Authorization") String token, @RequestParam String ownerId) {
+
+        return reviewService.findReviewByOwnerId(ownerId);
+    }
+
+    @PostMapping("/newUser")
+    public ResponseEntity<Object> newUser(@RequestBody UserDTO userDTO) {
         try {
-            Client client = clientService.createNewClient(clientSecret);
-            return ResponseEntity.ok(client);
+            ResponseEntity<Object> registrationResponse = userService.createNewUser(userDTO);
+            if (registrationResponse.getStatusCode() == HttpStatus.OK) {
+                LoginRequestDTO loginRequestDTO = (LoginRequestDTO) registrationResponse.getBody();
+                assert loginRequestDTO != null; //If the status code of the response is OK, then this cannot be null. Bypass the warning.
+                return reviewService.userLogin(loginRequestDTO.getUserName(), loginRequestDTO.getPassword());
+            } else {
+                return registrationResponse;
+            }
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<Object> userLogin(@RequestBody LoginRequestDTO loginRequestDTO) {
+        return reviewService.userLogin(loginRequestDTO.getUserName(), loginRequestDTO.getPassword());
+    }
+
+    @GetMapping("/checkJwt")
+    public boolean checkJwt(@RequestBody String jwtString) {
+        return authorizationService.verifyGenericToken(jwtString);
     }
 }

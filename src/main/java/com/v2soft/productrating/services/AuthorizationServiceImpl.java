@@ -1,6 +1,6 @@
 package com.v2soft.productrating.services;
 
-import com.v2soft.productrating.domain.Client;
+import com.v2soft.productrating.domain.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
@@ -30,21 +30,22 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
     private static final Logger infoAndDebuglogger = LogManager.getLogger("InfoAndDebugLogger");
 
-    final ClientService clientService;
+    final UserService userService;
+    final KeyLocator keyLocator;
 
     @Override
-    public boolean verifyToken(String token, String clientId, String tokenFunction) {
+    public boolean verifyToken(String token, String userId, String tokenFunction) {
         infoAndDebuglogger.info("Reached the verifyToken Method");
 
-        //If no client was found with the matching id, fail the authorization and log
-        Optional<Client> clientOptional = clientService.findClientById(clientId);
-        if (clientOptional.isEmpty()) {
-            infoAndDebuglogger.debug("Unable to find client with id: " + clientId);
+        //If no user was found with the matching id, fail the authorization and log
+        Optional<User> userOptional = userService.findUserById(userId);
+        if (userOptional.isEmpty()) {
+            infoAndDebuglogger.debug("Unable to find user with id: " + userId);
             return false;
         }
 
-        Client client = clientOptional.get();
-        String tokenSalt = client.getTokenSalt();
+        User user = userOptional.get();
+        String tokenSalt = user.getTokenSalt();
 
         //If the tokenFunction string does not match a value, then it is not a proper request: fail authorization
         String tokenPepper;
@@ -83,27 +84,72 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     }
 
     @Override
-    public boolean verifyClient(String clientId, String clientSecret) {
-        infoAndDebuglogger.info("Reached the verifyClient Method");
+    public boolean verifyGenericToken(String token) {
+        infoAndDebuglogger.info("Reached the verifyGenericToken Method");
 
-        //If no client was found with the matching id, fail the authorization and log
-        Optional<Client> clientOptional = clientService.findClientById(clientId);
-        if (clientOptional.isEmpty()) {
-            infoAndDebuglogger.debug("Unable to find client with id: " + clientId);
+        Jws<Claims> jws;
+        try {
+            jws = Jwts.parser()
+                    .keyLocator(keyLocator)
+                    .build()
+                    .parseSignedClaims(token);
+
+            infoAndDebuglogger.info("Jwt verified");
+            return true;
+        } catch (JwtException ex) {
+            infoAndDebuglogger.debug(ex);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean verifyUser(String userId, String password) {
+        infoAndDebuglogger.info("Reached the verifyUser Method");
+
+        //If no user was found with the matching id, fail the authorization and log
+        Optional<User> userOptional = userService.findUserById(userId);
+        if (userOptional.isEmpty()) {
+            infoAndDebuglogger.debug("Unable to find user with id: " + userId);
             return false;
         }
 
-        Client client = clientOptional.get();
+        User user = userOptional.get();
 
         //Retrieve the hashed secret and check if it matches the secret provided during request
         PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
-        String hashedSecret = client.getHashedSecret();
+        String hashedSecret = user.getHashedPassword();
 
-        if(!encoder.matches(clientSecret, hashedSecret)) {
+        if(!encoder.matches(password, hashedSecret)) {
             infoAndDebuglogger.debug("Provided secret did not match hashed secret.");
             return false;
         } else {
-            infoAndDebuglogger.info("Client authenticated");
+            infoAndDebuglogger.info("User authenticated");
+            return true;
+        }
+    }
+
+    @Override
+    public boolean verifyLogin(String userName, String password) {
+        infoAndDebuglogger.info("Reached the verifyLogin Method");
+
+        //If no user was found with the matching id, fail the authorization and log
+        Optional<User> userOptional = userService.findUserByUserName(userName);
+        if (userOptional.isEmpty()) {
+            infoAndDebuglogger.debug("Unable to find user with username: " + userName);
+            return false;
+        }
+
+        User user = userOptional.get();
+
+        //Retrieve the hashed secret and check if it matches the secret provided during request
+        PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+        String hashedPassword = user.getHashedPassword();
+
+        if(!encoder.matches(password, hashedPassword)) {
+            infoAndDebuglogger.debug("Provided password did not match hashed password.");
+            return false;
+        } else {
+            infoAndDebuglogger.info("User authenticated");
             return true;
         }
     }

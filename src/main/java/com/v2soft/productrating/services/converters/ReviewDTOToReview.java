@@ -18,6 +18,7 @@ public class ReviewDTOToReview implements Converter<ReviewDTO, Review> {
         Review review = new Review();
 
         review.setRatingId(source.getRatingId());
+        review.setUserId(source.getUserId());
         review.setFirstName(source.getFirstName());
         review.setLastName(source.getLastName());
         review.setProduct(source.getProduct());

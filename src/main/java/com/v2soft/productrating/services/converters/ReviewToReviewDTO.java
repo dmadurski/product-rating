@@ -13,6 +13,7 @@ public class ReviewToReviewDTO implements Converter<Review, ReviewDTO> {
         ReviewDTO reviewDTO = new ReviewDTO();
 
         reviewDTO.setRatingId(source.getRatingId());
+        reviewDTO.setUserId(source.getUserId());
         reviewDTO.setFirstName(source.getFirstName());
         reviewDTO.setLastName(source.getLastName());
         reviewDTO.setProduct(source.getProduct());
@@ -21,7 +22,6 @@ public class ReviewToReviewDTO implements Converter<Review, ReviewDTO> {
         reviewDTO.setComment(source.getComment());
         reviewDTO.setDateAndTime(source.getDateAndTime());
 
-        System.out.println("Reviewdto is : " + reviewDTO);
         return reviewDTO;
     }
 }

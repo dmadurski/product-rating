@@ -7,8 +7,8 @@ import lombok.*;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
-public class ClientVerificationDTO {
+public class UserVerificationDTO {
 
-    private String clientId;
-    private String clientSecret;
+    private String userId;
+    private String userSecret;
 }

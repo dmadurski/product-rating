@@ -1,6 +1,6 @@
 package com.v2soft.productrating.services;
 
-import com.v2soft.productrating.repositories.ClientRepository;
+import com.v2soft.productrating.repositories.UserRepository;
 import com.v2soft.productrating.services.converters.ReviewDTOToReview;
 import com.v2soft.productrating.services.converters.ReviewToReviewDTO;
 import com.v2soft.productrating.services.dtos.ReviewDTO;
@@ -40,9 +40,12 @@ public class ReviewServiceImpl implements ReviewService{
 
     final MongoTemplate mongoTemplate;
     final ReviewRepository reviewRepository;
-    final ClientRepository clientRepository;
+    final UserRepository userRepository;
     final ReviewDTOToReview reviewDTOToReviewConverter;
     final ReviewToReviewDTO reviewToReviewDTOConverter;
+    final AuthorizationService authorizationService;
+    final UserService userService;
+    final TokenService tokenService;
 
     @Override
     public List<ReviewDTO> findAll() {
@@ -210,8 +213,28 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Override
+    public List<ReviewDTO> findReviewByOwnerId(String userId) {
+        List<Review> userReviews = reviewRepository.findByUserId(userId);
+
+        return userReviews.stream()
+                .map(reviewToReviewDTOConverter::convert)
+                .toList();
+    }
+
+    @Override
     public Review findReview(String id) {
         Optional<Review> foundReviewOptional = reviewRepository.findById(id);
         return foundReviewOptional.orElse(null);
+    }
+
+    @Override
+    public ResponseEntity<Object> userLogin(String userName, String password) {
+        //Verify the login is correct, if so, generate a jwt and pass it back to the front end
+        boolean isLoginSuccessful = authorizationService.verifyLogin(userName, password);
+        if(!isLoginSuccessful){
+            return new ResponseEntity<>("Login unsuccessful, make sure username and password are correct.", HttpStatus.UNAUTHORIZED);
+        } else {
+            return tokenService.generateJWT(userName);
+        }
     }
 }

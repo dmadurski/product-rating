@@ -29,4 +29,8 @@ public interface ReviewService {
     ResponseEntity<Object> updateReview(Review updatedReview);
 
     Review findReview(String id);
+
+    ResponseEntity<Object> userLogin(String userName, String password);
+
+    List<ReviewDTO> findReviewByOwnerId(String userId);
 }

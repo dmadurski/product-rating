@@ -1,6 +1,6 @@
 package com.v2soft.productrating.services;
 
-import com.v2soft.productrating.domain.Client;
+import com.v2soft.productrating.domain.User;
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,30 +27,38 @@ import static org.mockito.Mockito.when;
 class AuthorizationServiceImplTest {
 
     @Mock
-    private ClientService clientService;
+    private UserService userService;
 
     @InjectMocks
     private AuthorizationServiceImpl authorizationService;
 
     String tokenFunction;
-    String clientId;
-    Client client;
+    String userId;
+    User user;
     String jwtString;
     SecretKey secretKey;
+    String userFirstName;
+    String userLastName;
+    String userUserName;
+    String userSecret;
 
     @BeforeEach
     void setUp() {
         tokenFunction = "delete";
-        clientId = "12345";
+        userId = "12345";
+        userFirstName = "firstName";
+        userLastName = "lastName";
+        userUserName = "userName";
+        userSecret = "exampleSecret";
+        String userSalt = "VKUEsgdKpwfBAqBc2Hbwuw==";
+        String userSecret = "exampleSecret";
 
-        String clientSalt = "salt";
-        String clientSecret = "exampleSecret";
         PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
-        String hashedSecret = encoder.encode(clientSecret);
-        client = new Client(clientId, clientSalt, hashedSecret);
+        String hashedSecret = encoder.encode(userSecret);
+        user = new User(userId, userFirstName, userLastName, userUserName, hashedSecret, userSalt, "USER");
 
         //Create the secretKey for signing JWTs
-        byte[] saltBytesDecoded = Base64.getDecoder().decode(clientSalt);
+        byte[] saltBytesDecoded = Base64.getDecoder().decode(userSalt);
         byte[] pepperBytesDecoded = Base64.getDecoder().decode("WiZY+hzJXK5NUpwHgqUYhJHlgdIwXehVRPQEO27X+yo=");
         byte[] secretKeyBytes = new byte[saltBytesDecoded.length + pepperBytesDecoded.length];
         System.arraycopy(saltBytesDecoded, 0, secretKeyBytes, 0, saltBytesDecoded.length);
@@ -80,8 +88,9 @@ class AuthorizationServiceImplTest {
                 .compact();
 
         //when
-        when(clientService.findClientById(clientId)).thenReturn(Optional.of(client));
-        boolean authResult = authorizationService.verifyToken(jwtString, clientId, tokenFunction);
+        when(userService.findUserById(userId)).thenReturn(Optional.of(user));
+
+        boolean authResult = authorizationService.verifyToken(jwtString, userId, tokenFunction);
 
         //then
         assertTrue(authResult);
@@ -99,8 +108,8 @@ class AuthorizationServiceImplTest {
                 .compact();
 
         //when
-        when(clientService.findClientById(clientId)).thenReturn(Optional.of(client));
-        boolean authResult = authorizationService.verifyToken(jwtString, clientId, tokenFunction);
+        when(userService.findUserById(userId)).thenReturn(Optional.of(user));
+        boolean authResult = authorizationService.verifyToken(jwtString, userId, tokenFunction);
 
         //then
         assertFalse(authResult);
@@ -118,8 +127,8 @@ class AuthorizationServiceImplTest {
                 .compact();
 
         //when
-        when(clientService.findClientById(clientId)).thenReturn(Optional.empty());
-        boolean authResult = authorizationService.verifyToken(jwtString, clientId, tokenFunction);
+        when(userService.findUserById(userId)).thenReturn(Optional.empty());
+        boolean authResult = authorizationService.verifyToken(jwtString, userId, tokenFunction);
 
         //then
         assertFalse(authResult);
@@ -128,8 +137,8 @@ class AuthorizationServiceImplTest {
     @Test
     void verifyClient() {
         //when
-        when(clientService.findClientById(clientId)).thenReturn(Optional.of(client));
-        boolean authResult = authorizationService.verifyClient(clientId, "exampleSecret");
+        when(userService.findUserById(userId)).thenReturn(Optional.of(user));
+        boolean authResult = authorizationService.verifyUser(userId, "exampleSecret");
 
         //then
         assertTrue(authResult);
@@ -138,8 +147,8 @@ class AuthorizationServiceImplTest {
     @Test
     void verifyClientBadSecret() {
         //when
-        when(clientService.findClientById(clientId)).thenReturn(Optional.of(client));
-        boolean authResult = authorizationService.verifyClient(clientId, "wrongSecret");
+        when(userService.findUserById(userId)).thenReturn(Optional.of(user));
+        boolean authResult = authorizationService.verifyUser(userId, "wrongSecret");
 
         //then
         assertFalse(authResult);
@@ -148,8 +157,8 @@ class AuthorizationServiceImplTest {
     @Test
     void verifyMissingClient() {
         //when
-        when(clientService.findClientById(clientId)).thenReturn(Optional.empty());
-        boolean authResult = authorizationService.verifyClient(clientId, "exampleSecret");
+        when(userService.findUserById(userId)).thenReturn(Optional.empty());
+        boolean authResult = authorizationService.verifyUser(userId, "exampleSecret");
 
         //then
         assertFalse(authResult);
