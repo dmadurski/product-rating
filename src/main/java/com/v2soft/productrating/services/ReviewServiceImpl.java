@@ -1,5 +1,6 @@
 package com.v2soft.productrating.services;
 
+import com.v2soft.productrating.domain.ImageDetails;
 import com.v2soft.productrating.repositories.UserRepository;
 import com.v2soft.productrating.services.converters.ReviewDTOToReview;
 import com.v2soft.productrating.services.converters.ReviewToReviewDTO;
@@ -46,6 +47,7 @@ public class ReviewServiceImpl implements ReviewService{
     final AuthorizationService authorizationService;
     final UserService userService;
     final TokenService tokenService;
+    final ImageService imageService;
 
     @Override
     public List<ReviewDTO> findAll() {
@@ -126,18 +128,10 @@ public class ReviewServiceImpl implements ReviewService{
         }
     }
 
-    //Ignore property for optional properites in domain (for example: comments)
     //Add a check to make sure the same user can't make multiple reviews for the same product
     @Override
     public ResponseEntity<Object> saveReview(ReviewDTO newReviewDTO) {
         Review newReview = reviewDTOToReviewConverter.convert(newReviewDTO);
-
-        //This code can be removed once input validation is included on the front-end
-        if(newReview == null){
-            infoAndDebuglogger.debug("Unable to convert following ReviewDTO to a Review: " + newReviewDTO);
-            return new ResponseEntity<>("Save request unsuccessful. " +
-                    "Make sure all fields are correct and try again.", HttpStatus.BAD_REQUEST);
-        }
 
         reviewRepository.save(newReview);
         Optional<Review> reviewOptional = reviewRepository.findById(newReview.getRatingId());
@@ -147,6 +141,10 @@ public class ReviewServiceImpl implements ReviewService{
             infoAndDebuglogger.info("Saved new review: " + newReview);
             //Add the review to the log if the score is low
             if(newReview.getScore() < poorScore) lowReviewsLogger.info("Bad review:" + newReview.reviewCollectionToString());
+
+            //Send an email confirming new review success to user
+            //userService.notifyReviewSuccess(reviewOptional.get());
+
             return ResponseEntity.ok(newReviewDTO);
         } else {
             infoAndDebuglogger.debug("Unable to save the following review: " + newReview);
@@ -169,6 +167,15 @@ public class ReviewServiceImpl implements ReviewService{
         Optional<Review> reviewToDeleteOptional = reviewRepository.findById(id);
         if (reviewToDeleteOptional.isPresent()) {
             Review reviewToDelete = reviewToDeleteOptional.get();
+
+            //If the review has images associated with it, delete those images from the image collection
+            if(reviewToDelete.getImageDetailsList() != null && !reviewToDelete.getImageDetailsList().isEmpty()){
+                List<ImageDetails> imageDetailsList = reviewToDelete.getImageDetailsList();
+                for (ImageDetails imageDetails: imageDetailsList){
+                    imageService.deleteImage(imageDetails.getImageId());
+                }
+            }
+
             reviewRepository.deleteById(reviewToDelete.getRatingId());
             infoAndDebuglogger.info("Review deleted");
             return ResponseEntity.ok(reviewRepository.findAll());

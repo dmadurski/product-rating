@@ -33,4 +33,6 @@ public interface ReviewService {
     ResponseEntity<Object> userLogin(String userName, String password);
 
     List<ReviewDTO> findReviewByOwnerId(String userId);
+
+//    MultipartFile findReviewFile(String fileName, String reviewId) throws FileNotFoundException;
 }

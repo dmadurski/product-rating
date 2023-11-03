@@ -1,5 +1,6 @@
 package com.v2soft.productrating.services;
 
+import com.v2soft.productrating.domain.Review;
 import com.v2soft.productrating.domain.User;
 import com.v2soft.productrating.services.dtos.UserDTO;
 import org.springframework.http.ResponseEntity;
@@ -13,4 +14,6 @@ public interface UserService {
     Optional<User> findUserById(String id);
 
     Optional<User> findUserByUserName(String id);
+
+    void notifyReviewSuccess(Review review);
 }

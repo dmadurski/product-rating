@@ -13,10 +13,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class User {
     @Id
     String userId;
-    String firstName;
-    String lastName;
-    String userName;
-    String hashedPassword;
-    String tokenSalt;
-    String role;
+    public String firstName;
+    public String lastName;
+    public String userName;
+    public String hashedPassword;
+    public String tokenSalt;
+    public String role;
 }

@@ -25,6 +25,7 @@ public class Review {
     public String product;
     public int score;
     public String comment;
+    public List<ImageDetails> imageDetailsList;
     public LocalDateTime dateAndTime;
     public List<Review> previousVersions;
     public int versionCount;

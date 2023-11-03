@@ -1,6 +1,7 @@
 package com.v2soft.productrating.services;
 
 import com.google.common.hash.Hashing;
+import com.v2soft.productrating.domain.Review;
 import com.v2soft.productrating.domain.User;
 import com.v2soft.productrating.repositories.UserRepository;
 import com.v2soft.productrating.services.dtos.LoginRequestDTO;
@@ -38,7 +39,7 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("User secret must be a non-empty string");
         }
 
-        if (userRepository.findByUserName(userUserName).isPresent()){
+        if (userRepository.findByUserNameIgnoreCase(userUserName).isPresent()){
             return new ResponseEntity<>("That username is already in use, please choose another one.", HttpStatus.CONFLICT);
         }
 
@@ -75,8 +76,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<User> findUserByUserName(String id) {
+    public Optional<User> findUserByUserName(String userName) {
 
-        return userRepository.findByUserName(id);
+        return userRepository.findByUserNameIgnoreCase(userName);
+    }
+
+    @Override
+    public void notifyReviewSuccess(Review review) {
+
     }
 }

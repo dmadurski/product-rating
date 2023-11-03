@@ -20,6 +20,7 @@ public class ReviewToReviewDTO implements Converter<Review, ReviewDTO> {
         reviewDTO.setZipcode(source.getZipcode());
         reviewDTO.setScore(source.getScore());
         reviewDTO.setComment(source.getComment());
+        reviewDTO.setImageDetailsList(source.getImageDetailsList());
         reviewDTO.setDateAndTime(source.getDateAndTime());
 
         return reviewDTO;

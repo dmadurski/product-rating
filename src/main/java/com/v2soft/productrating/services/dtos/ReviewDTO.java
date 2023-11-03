@@ -1,8 +1,10 @@
 package com.v2soft.productrating.services.dtos;
 
+import com.v2soft.productrating.domain.ImageDetails;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -18,5 +20,7 @@ public class ReviewDTO {
     public String product;
     public int score;
     public String comment;
+    //@JsonSerialize(using = MultipartFileListSerializer.class)
+    public List<ImageDetails> imageDetailsList;
     public LocalDateTime dateAndTime;
 }

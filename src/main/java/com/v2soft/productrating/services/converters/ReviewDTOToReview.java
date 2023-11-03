@@ -25,6 +25,7 @@ public class ReviewDTOToReview implements Converter<ReviewDTO, Review> {
         review.setZipcode(source.getZipcode());
         review.setScore(source.getScore());
         review.setComment(source.getComment());
+        review.setImageDetailsList(source.getImageDetailsList());
         review.setDateAndTime(LocalDateTime.now());
         review.setPreviousVersions(new ArrayList<>());
         review.setVersionCount(1);

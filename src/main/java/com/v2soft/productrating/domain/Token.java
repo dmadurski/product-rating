@@ -14,7 +14,7 @@ public class Token {
 
     @Id
     String id;
-    String ownerId; //Should match a valid userId
-    String jwtString;
-    Date expirationDate;
+    public String ownerId; //Should match a valid userId
+    public String jwtString;
+    public Date expirationDate;
 }

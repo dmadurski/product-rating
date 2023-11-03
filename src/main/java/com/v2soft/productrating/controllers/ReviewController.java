@@ -1,5 +1,6 @@
 package com.v2soft.productrating.controllers;
 
+import com.v2soft.productrating.domain.ImageDetails;
 import com.v2soft.productrating.domain.Review;
 import com.v2soft.productrating.services.AuthorizationService;
 import com.v2soft.productrating.services.UserService;
@@ -11,12 +12,15 @@ import com.v2soft.productrating.services.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -24,6 +28,7 @@ import java.util.List;
 @RestController
 public class ReviewController {
 
+    private static final Logger infoAndDebuglogger = LogManager.getLogger("InfoAndDebugLogger");
     private static final Logger metricsLogger = LogManager.getLogger("MetricsLogger");
 
     final ReviewService reviewService;
@@ -74,10 +79,45 @@ public class ReviewController {
 
     @PreAuthorize("@authorizationServiceImpl.verifyGenericToken(#token)")
     @PostMapping("/newReview")
-    public ResponseEntity<Object> newReview(@RequestHeader(name="Authorization") String token, @RequestBody ReviewDTO newReviewDTO){
-        metricsLogger.info("Accessed /newReview endpoint");
+    public ResponseEntity<Object> newReview(@RequestHeader(name="Authorization") String token,
+                                            @RequestParam("userId") String userId,
+                                            @RequestParam("firstName") String firstName,
+                                            @RequestParam("lastName") String lastName,
+                                            @RequestParam("zipcode") int zipcode,
+                                            @RequestParam("product") String product,
+                                            @RequestParam("score") int score,
+                                            @RequestParam("comment") String comment,
+                                            @RequestParam(value = "imageDetailsList", required = false) String imageDetailsListJson) {
+        System.out.println("It reaches inside the new review controller method");
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
 
-        return reviewService.saveReview(newReviewDTO);
+            // Parse the JSON array into a list of ImageDetails
+            List<ImageDetails> imageDetailsList = new ArrayList<ImageDetails>();
+            if(imageDetailsListJson != null) {
+                System.out.println("ImageDetailsList from angular is:");
+                System.out.println(imageDetailsListJson);
+                imageDetailsList = objectMapper.readValue(
+                        imageDetailsListJson,
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, ImageDetails.class)
+                );
+            }
+
+            // Create a ReviewDTO object with the provided parameters
+            ReviewDTO newReviewDTO = new ReviewDTO();
+            newReviewDTO.setUserId(userId);
+            newReviewDTO.setFirstName(firstName);
+            newReviewDTO.setLastName(lastName);
+            newReviewDTO.setZipcode(zipcode);
+            newReviewDTO.setProduct(product);
+            newReviewDTO.setScore(score);
+            newReviewDTO.setComment(comment);
+            newReviewDTO.setImageDetailsList(imageDetailsList);
+            return reviewService.saveReview(newReviewDTO);
+        } catch (IOException e) {
+            // Handle JSON exception
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PreAuthorize("@authorizationServiceImpl.verifyToken(#token, #userId, 'delete')")
