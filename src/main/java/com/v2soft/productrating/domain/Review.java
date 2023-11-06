@@ -22,6 +22,7 @@ public class Review {
     public String firstName;
     public String lastName;
     public int zipcode;
+    public String email;
     public String product;
     public int score;
     public String comment;

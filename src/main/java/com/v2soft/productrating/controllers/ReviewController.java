@@ -85,6 +85,7 @@ public class ReviewController {
                                             @RequestParam("lastName") String lastName,
                                             @RequestParam("zipcode") int zipcode,
                                             @RequestParam("product") String product,
+                                            @RequestParam("email") String email,
                                             @RequestParam("score") int score,
                                             @RequestParam("comment") String comment,
                                             @RequestParam(value = "imageDetailsList", required = false) String imageDetailsListJson) {
@@ -110,9 +111,11 @@ public class ReviewController {
             newReviewDTO.setLastName(lastName);
             newReviewDTO.setZipcode(zipcode);
             newReviewDTO.setProduct(product);
+            newReviewDTO.setEmail(email);
             newReviewDTO.setScore(score);
             newReviewDTO.setComment(comment);
             newReviewDTO.setImageDetailsList(imageDetailsList);
+
             return reviewService.saveReview(newReviewDTO);
         } catch (IOException e) {
             // Handle JSON exception

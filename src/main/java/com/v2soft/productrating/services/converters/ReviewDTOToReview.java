@@ -23,6 +23,7 @@ public class ReviewDTOToReview implements Converter<ReviewDTO, Review> {
         review.setLastName(source.getLastName());
         review.setProduct(source.getProduct());
         review.setZipcode(source.getZipcode());
+        review.setEmail(source.getEmail());
         review.setScore(source.getScore());
         review.setComment(source.getComment());
         review.setImageDetailsList(source.getImageDetailsList());

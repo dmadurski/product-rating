@@ -12,5 +12,7 @@ public interface ImageService {
 
     MultipartFileDetails fetchImage(String imageId) throws FileNotFoundException;
 
+    MultipartFile fetchImageForAttachment(String imageId) throws FileNotFoundException;
+
     void deleteImage(String imageId);
 }

@@ -1,32 +1,48 @@
 package com.v2soft.productrating.services;
 
 import com.google.common.hash.Hashing;
+import com.v2soft.productrating.domain.ImageDetails;
 import com.v2soft.productrating.domain.Review;
 import com.v2soft.productrating.domain.User;
 import com.v2soft.productrating.repositories.UserRepository;
 import com.v2soft.productrating.services.dtos.LoginRequestDTO;
 import com.v2soft.productrating.services.dtos.UserDTO;
-import lombok.AllArgsConstructor;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Service
 public class UserServiceImpl implements UserService {
 
     private static final Logger infoAndDebuglogger = LogManager.getLogger("InfoAndDebugLogger");
 
     final UserRepository userRepository;
+    final ImageService imageService;
+    final JavaMailSender javaMailSender;
+
+    @Value("${spring.mail.username}")
+    private String sender;
     @Override
     public ResponseEntity<Object> createNewUser(UserDTO userDTO) throws IllegalArgumentException {
         String userFirstName = userDTO.getFirstName();
@@ -83,6 +99,66 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void notifyReviewSuccess(Review review) {
+        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+        MimeMessageHelper mimeMessageHelper;
 
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
+        String formattedDateTime = review.getDateAndTime().format(formatter);
+
+        String reviewOwnerId = review.getUserId();
+        Optional<User> reviewOwnerOptional = userRepository.findById(reviewOwnerId);
+
+        if(reviewOwnerOptional.isPresent()){
+            User reviewOwner = reviewOwnerOptional.get();
+            String reviewOwnerEmail = review.getEmail();
+            String emailBody = "Hello " + reviewOwner.getUserName() + "," +
+                    "<br>Your review for " + review.getProduct() + " was successfully posted at " + formattedDateTime + " with the following information:" +
+                    "<br>Score: " + review.getScore();
+
+            if(!review.getComment().isEmpty()){
+                emailBody = emailBody + "<br>Comment: " + review.getComment();
+            }
+
+            String emailSubject = "Review successfully posted for " + review.getProduct();
+
+            try {
+                mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
+                mimeMessageHelper.setFrom(sender);
+                mimeMessageHelper.setTo(reviewOwnerEmail);
+                mimeMessageHelper.setSubject(emailSubject);
+
+                if(!review.getImageDetailsList().isEmpty()){
+                    List<MultipartFile> reviewImages = new ArrayList<MultipartFile>();
+                    List<ImageDetails> imageDetailsList = review.getImageDetailsList();
+                    for(ImageDetails imageDetails: imageDetailsList){
+                        String imageId = imageDetails.getImageId();
+                        try{
+                            reviewImages.add(imageService.fetchImageForAttachment(imageId));
+                        } catch (FileNotFoundException e){
+                            //Cause of error already logged in imageService. No need to handle exception
+                        }
+                    }
+                    //Add the images as attachments to the email
+                    if(!reviewImages.isEmpty()) {
+                        emailBody = emailBody + "<br><br>The files you sent with the review have been attached to this email for your record.";
+                        for(MultipartFile image: reviewImages) {
+                            //If the files list is not empty, then getOriginalFilename will never be null
+                            mimeMessageHelper.addAttachment(image.getOriginalFilename(), image);
+                        }
+                    } else {
+                        emailBody = emailBody + "<br><br>There was a problem attaching the images you included in your review to this email. Please make sure the correct images were upload ";
+                    }
+                }
+
+                mimeMessageHelper.setText(emailBody, true);
+
+                // Sending the mail
+                javaMailSender.send(mimeMessage);
+            }
+            // Catch block to handle MessagingException
+            catch (MessagingException e) {
+                infoAndDebuglogger.error(e);
+            }
+        }
     }
 }

@@ -143,7 +143,7 @@ public class ReviewServiceImpl implements ReviewService{
             if(newReview.getScore() < poorScore) lowReviewsLogger.info("Bad review:" + newReview.reviewCollectionToString());
 
             //Send an email confirming new review success to user
-            //userService.notifyReviewSuccess(reviewOptional.get());
+            userService.notifyReviewSuccess(reviewOptional.get());
 
             return ResponseEntity.ok(newReviewDTO);
         } else {

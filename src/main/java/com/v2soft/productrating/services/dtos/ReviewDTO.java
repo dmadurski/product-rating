@@ -17,10 +17,10 @@ public class ReviewDTO {
     public String firstName;
     public String lastName;
     public int zipcode;
+    public String email;
     public String product;
     public int score;
     public String comment;
-    //@JsonSerialize(using = MultipartFileListSerializer.class)
     public List<ImageDetails> imageDetailsList;
     public LocalDateTime dateAndTime;
 }
