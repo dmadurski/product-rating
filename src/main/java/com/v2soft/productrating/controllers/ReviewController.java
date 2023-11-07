@@ -199,7 +199,7 @@ public class ReviewController {
     }
 
     @GetMapping("/checkJwt")
-    public boolean checkJwt(@RequestBody String jwtString) {
-        return authorizationService.verifyGenericToken(jwtString);
+    public ResponseEntity<Object> checkJwt(@RequestParam String jwtString) {
+        return authorizationService.verifyGenericTokenWithResponse(jwtString);
     }
 }

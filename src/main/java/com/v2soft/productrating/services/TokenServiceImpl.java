@@ -84,6 +84,41 @@ public class TokenServiceImpl implements TokenService {
         return ResponseEntity.ok(loginResponse);
     }
 
+    @Override
+    public ResponseEntity<Object> regenerateJwt(String userId){
+        Optional<User> userOptional = userService.findUserById(userId);
+        if (userOptional.isEmpty()) {
+            infoAndDebuglogger.debug("Unable to find user with userId: " + userId);
+            return new ResponseEntity<>("No user found with that userId", HttpStatus.NOT_FOUND);
+        }
+
+        User user = userOptional.get();
+        String tokenSalt = user.getTokenSalt();
+        Date expiration = new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(2));
+
+        // Decode tokenSalt and tokenPepper
+        byte[] saltBytesDecoded = Base64.getDecoder().decode(tokenSalt);
+        byte[] pepperBytesDecoded = Base64.getDecoder().decode(genericPepper);
+
+        // Concatenate the two byte arrays to create the secret key bytes
+        byte[] secretKeyBytes = new byte[saltBytesDecoded.length + pepperBytesDecoded.length];
+        System.arraycopy(saltBytesDecoded, 0, secretKeyBytes, 0, saltBytesDecoded.length);
+        System.arraycopy(pepperBytesDecoded, 0, secretKeyBytes, saltBytesDecoded.length, pepperBytesDecoded.length);
+
+        // Create the SecretKey using the combined bytes
+        SecretKey secretKey = new SecretKeySpec(secretKeyBytes, "HmacSHA256");
+
+        String jwtID = java.util.UUID.randomUUID().toString();
+        String jwtString = Jwts.builder()
+                .header().keyId(user.getUserId()).and()
+                .expiration(expiration)
+                .id(jwtID)
+                .signWith(secretKey)
+                .compact();
+
+        return ResponseEntity.ok(jwtString);
+    }
+
     //Method for API access
     @Override
     public ResponseEntity<Object> generateFunctionJWT(String tokenFunction, String userId){

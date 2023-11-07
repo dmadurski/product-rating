@@ -1,14 +1,13 @@
 package com.v2soft.productrating.services;
 
 import com.v2soft.productrating.domain.User;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -16,6 +15,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Base64;
+import java.util.Date;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -27,6 +27,9 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
     @Value("${jwt.delete.pepper}")
     private String deletePepper;
+
+    @Value("${max.time.expired}")
+    private int maxTimeExpired;
 
     private static final Logger infoAndDebuglogger = LogManager.getLogger("InfoAndDebugLogger");
 
@@ -99,6 +102,37 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         } catch (JwtException ex) {
             infoAndDebuglogger.debug(ex);
             return false;
+        }
+    }
+
+    @Override
+    public ResponseEntity<Object> verifyGenericTokenWithResponse(String token) {
+        infoAndDebuglogger.info("Reached the verifyGenericTokenWithResponse Method");
+
+        Jws<Claims> jws;
+        try {
+            jws = Jwts.parser()
+                    .keyLocator(keyLocator)
+                    .build()
+                    .parseSignedClaims(token);
+
+            infoAndDebuglogger.info("JWT verified");
+            return ResponseEntity.ok("JWT verified");
+        } catch (ExpiredJwtException expiredJwtException) {
+            infoAndDebuglogger.error("JWT expired: " + expiredJwtException.getMessage());
+
+            //Check how long the Token has been expired for (in minutes)
+            Date now = new Date();
+            Date expiration = expiredJwtException.getClaims().getExpiration();
+            long timeExpiredInMinutes = (expiration.getTime() - now.getTime()) / 60000;
+            if (timeExpiredInMinutes > maxTimeExpired) {
+                return ResponseEntity.ok("JWT expired for too long");
+            } else {
+                return ResponseEntity.ok("JWT recently expired");
+            }
+        } catch (JwtException ex) {
+            infoAndDebuglogger.error(ex);
+            return new ResponseEntity<>("JWT not Authentic", HttpStatus.UNAUTHORIZED);
         }
     }
 
