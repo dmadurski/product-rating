@@ -89,15 +89,13 @@ public class ReviewController {
                                             @RequestParam("score") int score,
                                             @RequestParam("comment") String comment,
                                             @RequestParam(value = "imageDetailsList", required = false) String imageDetailsListJson) {
-        System.out.println("It reaches inside the new review controller method");
+
         try {
             ObjectMapper objectMapper = new ObjectMapper();
 
             // Parse the JSON array into a list of ImageDetails
             List<ImageDetails> imageDetailsList = new ArrayList<ImageDetails>();
             if(imageDetailsListJson != null) {
-                System.out.println("ImageDetailsList from angular is:");
-                System.out.println(imageDetailsListJson);
                 imageDetailsList = objectMapper.readValue(
                         imageDetailsListJson,
                         objectMapper.getTypeFactory().constructCollectionType(List.class, ImageDetails.class)
